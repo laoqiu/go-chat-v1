@@ -43,6 +43,12 @@ func Version(v string) Option {
 	}
 }
 
+func Topic(v string) Option {
+	return func(o *Options) {
+		o.Topic = v
+	}
+}
+
 func RegistryOptions(opts ...registry.Option) Option {
 	return func(o *Options) {
 		o.RegistryOptions = opts

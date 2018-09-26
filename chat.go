@@ -62,16 +62,18 @@ func (s *service) Run() error {
 }
 
 // NewHandler handles websocket requests from the peer.
-func (s *service) NewHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
+func (s *service) NewHandler() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer conn.Close()
+		client := &Client{broker: s.broker, hub: s.hub, conn: conn, send: make(chan []byte, 256)}
+		client.time = time.Now()
+		client.hub.register <- client
+		go client.writer()
+		client.reader()
 	}
-	defer conn.Close()
-	client := &Client{broker: s.broker, hub: s.hub, conn: conn, send: make(chan []byte, 256)}
-	client.time = time.Now()
-	client.hub.register <- client
-	go client.writer()
-	client.reader()
 }
